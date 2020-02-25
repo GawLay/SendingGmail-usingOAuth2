@@ -19,4 +19,4 @@ dependencies {
 
 download required jar files from this link http://www.mediafire.com/file/6lo99cjmk7y52o9/11.JavaMailApiJars.zip/file
 
-You need to set your package name and SHA KEY to Google API CONSOLE
+You need to create new PROJECT and set your package name and SHA KEY in Google API CONSOLE
