@@ -72,7 +72,7 @@ class MailService {
 
         //Set the multipart object to the message object
         email.setContent(multipart)
-        Log.e("Message","Create EMail")
+        Log.e("Message", "Create EMail")
         return email
     }
 
@@ -83,7 +83,7 @@ class MailService {
         val encodedEmail = Base64.encodeBase64URLSafeString(bytes.toByteArray())
         val message = Message()
         message.raw = encodedEmail
-        Log.e("Message","Create MessageWithEmail")
+        Log.e("Message", "Create MessageWithEmail")
         return message
     }
 

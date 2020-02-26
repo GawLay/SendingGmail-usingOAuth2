@@ -18,7 +18,7 @@ import com.google.api.services.gmail.Gmail
 import com.google.api.services.gmail.GmailScopes
 import com.lfuture.mygmail.util.CheckServices
 import com.lfuture.mygmail.util.MailService
-import com.lfuture.mygmail.util.Utils
+import com.lfuture.mygmail.util.Permission
 import kotlinx.android.synthetic.main.activity_main.*
 import javax.mail.MessagingException
 import javax.mail.internet.MimeMessage
@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
         btnChange.setOnClickListener {
             startActivityForResult(
                 mCredential.newChooseAccountIntent(),
-                Utils.REQUEST_ACCOUNT_PICKER
+                Permission.REQUEST_ACCOUNT_PICKER
             )
 
         }
@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
     private val PREF_ACCOUNT_NAME = "accountName"
 
     private fun chooseAccount() {
-        if (Utils.checkPermission(this, Manifest.permission.GET_ACCOUNTS)) {
+        if (Permission.checkPermission(this, Manifest.permission.GET_ACCOUNTS)) {
             //to check if account is chosen from gmail dialog
             val accName = getPreferences(Context.MODE_PRIVATE).getString(PREF_ACCOUNT_NAME, null)
             if (accName != null) {
@@ -90,14 +90,14 @@ class MainActivity : AppCompatActivity() {
                 //if accName does not exist we request accName(gmail) again
                 startActivityForResult(
                     mCredential.newChooseAccountIntent(),
-                    Utils.REQUEST_ACCOUNT_PICKER
+                    Permission.REQUEST_ACCOUNT_PICKER
                 )
             }
         } else {
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(Manifest.permission.GET_ACCOUNTS),
-                Utils.REQUEST_PERMISSION_GET_ACCOUNTS
+                Permission.REQUEST_PERMISSION_GET_ACCOUNTS
             )
         }
     }
@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
-            Utils.REQUEST_PERMISSION_GET_ACCOUNTS -> {
+            Permission.REQUEST_PERMISSION_GET_ACCOUNTS -> {
                 chooseAccount()
             }
         }
@@ -119,7 +119,7 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
-            Utils.REQUEST_ACCOUNT_PICKER -> {
+            Permission.REQUEST_ACCOUNT_PICKER -> {
                 if (resultCode == RESULT_OK && data != null && data.extras != null) {
                     val accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME)
                     if (accountName != null) {
@@ -132,7 +132,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            Utils.REQUEST_AUTHORIZATION -> {
+            Permission.REQUEST_AUTHORIZATION -> {
                 if (resultCode == RESULT_OK) {
                     getResultsFromApi()
                 }
@@ -183,11 +183,16 @@ class MainActivity : AppCompatActivity() {
 
         override fun onCancelled() {
             super.onCancelled()
-            if (mLastError is UserRecoverableAuthIOException) {
-                startActivityForResult(
-                    (mLastError as UserRecoverableAuthIOException).intent,
-                    Utils.REQUEST_AUTHORIZATION
-                )
+            if (mLastError != null) {
+                if (mLastError is UserRecoverableAuthIOException) {
+                    startActivityForResult(
+                        (mLastError as UserRecoverableAuthIOException).intent,
+                        Permission.REQUEST_AUTHORIZATION
+                    )
+                } else {
+                    Log.e("Error", "The following error occurred:\n$mLastError")
+                    Log.e("Error", mLastError.toString() + "")
+                }
             } else {
                 Log.e("Cancel", "The following error occurred:\n$mLastError")
                 Log.v("Error", "" + mLastError)
@@ -195,25 +200,24 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-    }
+        private fun getData(): String {
+            val user = "me" //this is google gMail default user id for yourself
+            val to = "yuya5995@gmail.com"
+            val from = mCredential.selectedAccountName  //we get account name from gMail dialog
+            val subject = "Hi"
+            val body = "hello from mandalay"
+            val mimeMessage: MimeMessage
+            var response = ""
+            try {
+                mimeMessage = mailService.createEmail(to, from, subject, body)
+                response = mailService.sendMessage(mService!!, user, mimeMessage)
 
-    private fun getData(): String {
-        val user = "me" //this is google gMail default user id for yourself
-        val to = "yuya5995@gmail.com"
-        val from = mCredential.selectedAccountName  //we get account name from gMail dialog
-        val subject = "Hi"
-        val body = "hello from mandalay"
-        val mimeMessage: MimeMessage
-        var response = ""
-        try {
-            mimeMessage = mailService.createEmail(to, from, subject, body)
-            response = mailService.sendMessage(mService!!, user, mimeMessage)
-
-        } catch (e: MessagingException) {
-            e.printStackTrace()
+            } catch (e: MessagingException) {
+                e.printStackTrace()
+            }
+            return response
         }
-        return response
-    }
 
+    }
 }
 

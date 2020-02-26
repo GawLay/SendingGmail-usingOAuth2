@@ -36,7 +36,7 @@ class CheckServices(activity: Activity) {
         val dialog = apiAvailability.getErrorDialog(
             activity,
             connectionStatusCode,
-            Utils.REQUEST_GOOGLE_PLAY_SERVICES
+            Permission.REQUEST_GOOGLE_PLAY_SERVICES
         )
         dialog.show()
     }
